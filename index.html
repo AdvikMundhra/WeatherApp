@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advik's Weather</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Calibri, sans-serif;
+            background-image: url('/static/WindowsXP.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 50px;
+            text-align: center;
+            width: 420px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #0984e3;
+            margin-bottom: 30px;
+            font-style: bold;
+        }
+
+        #city_label {
+            font-size: 18px;
+            color: #636e72;
+            margin-bottom: 10px;
+        }
+
+        #city_input {
+            width: 100%;
+            font-size: 22px;
+            font-family: Calibri, sans-serif;
+            padding: 10px 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #city_input:focus {
+            border-color: #0984e3;
+        }
+
+        #get_weather_button {
+            margin-top: 16px;
+            width: 100%;
+            font-size: 20px;
+            font-weight: bold;
+            font-family: Calibri, sans-serif;
+            padding: 12px;
+            background: #0984e3;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #get_weather_button:hover {
+            background: #0773c5;
+        }
+
+        #result {
+            margin-top: 30px;
+            display: none;
+        }
+
+        #emoji_label {
+            font-size: 80px;
+            font-family: "Segoe UI Emoji", sans-serif;
+            line-height: 1.2;
+        }
+
+        #temperature_label {
+            font-size: 60px;
+            font-weight: bold;
+            color: #2d3436;
+            margin: 10px 0 5px;
+        }
+
+        #description_label {
+            font-size: 26px;
+            color: #636e72;
+        }
+
+        #wind_label {
+            font-size: 18px;
+            color: #636e72;
+            margin-top: 8px;
+        }
+
+        #error_label {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #d63031;
+            display: none;
+        }
+
+        .spinner {
+            margin-top: 20px;
+            display: none;
+            font-size: 18px;
+            color: #636e72;
+        }
+
+        @keyframes bob {
+            0%   { transform: translateY(0px); }
+            50%  { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        #fact_box {
+            background: rgba(255, 255, 255, 0.92);
+            border-left: 5px solid #0984e3;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            width: 420px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            font-size: 15px;
+            color: #2d3436;
+            line-height: 1.5;
+            text-align: left;
+            animation: bob 3s ease-in-out infinite;
+        }
+
+        #fact_box span {
+            font-weight: bold;
+            color: #0984e3;
+        }
+    </style>
+</head>
+<body>
+    <div id="fact_box"><span>💡 Fun Fact:</span> {{ fact }}</div>
+    <div class="card">
+        <h1>Advik's Weather</h1>
+
+        <p id="city_label">Enter city name:</p>
+        <input type="text" id="city_input" placeholder="e.g. London" />
+        <button id="get_weather_button" onclick="fetchWeather()">Get Weather</button>
+
+        <p class="spinner" id="spinner">Loading...</p>
+        <p id="error_label"></p>
+
+        <div id="result">
+            <div id="emoji_label"></div>
+            <div id="temperature_label"></div>
+            <div id="description_label"></div>
+            <div id="wind_label"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("city_input").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") fetchWeather();
+        });
+
+        async function fetchWeather() {
+            const city = document.getElementById("city_input").value.trim();
+            if (!city) return;
+
+            document.getElementById("result").style.display = "none";
+            document.getElementById("error_label").style.display = "none";
+            document.getElementById("spinner").style.display = "block";
+
+            try {
+                const response = await fetch(`/weather?city=${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                document.getElementById("spinner").style.display = "none";
+
+                if (!response.ok) {
+                    document.getElementById("error_label").textContent = data.error;
+                    document.getElementById("error_label").style.display = "block";
+                    return;
+                }
+
+                document.getElementById("emoji_label").textContent = data.emoji;
+                document.getElementById("temperature_label").textContent = `${data.temperature}°C`;
+                document.getElementById("description_label").textContent = data.description;
+                document.getElementById("wind_label").textContent = `💨 Wind: ${data.wind_speed} km/h`;
+                document.getElementById("result").style.display = "block";
+
+            } catch (err) {
+                document.getElementById("spinner").style.display = "none";
+                document.getElementById("error_label").textContent = "Something went wrong. Please try again.";
+                document.getElementById("error_label").style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
